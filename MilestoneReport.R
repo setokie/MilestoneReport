@@ -33,3 +33,28 @@ summary(ContentTokens)
 dfm_content <- dfm(ContentTokens)
 dfm_content <- dfm_trim(dfm_content, min_docfreq = 2)
 topfeatures(dfm_content)
+
+# exploratory data analysis
+ dfm_content %>%
+     textstat_frequency(n=10) %>%
+     ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+                geom_point() +
+                coord_flip() +
+                labs(x = NULL, y = "Frequency") +
+                theme_minimal()
+
+twogram <- tokens_ngrams(ContentTokens, n = 2)
+dfm_twogram <-dfm(twogram)
+
+dfm_twogram %>%
+    textstat_frequency(n=10) %>%
+    ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+    geom_point() +
+    coord_flip() +
+    labs(x = NULL, y = "Frequency") +
+    theme_minimal()
+topfeatures(dfm_twogram)
+
+threegram <- tokens_ngrams(ContentTokens, n = 3)
+dfm_threegram <- dfm(threegram)
+
