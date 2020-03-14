@@ -66,7 +66,6 @@ dfm_content <- dfm_trim(dfm_content, min_docfreq = 2)
 ### **Unigram**
 ```{r Unigram, message=TRUE, warning=TRUE}
 # exploratory data analysis
-topfeatures(dfm_content)
 
 dfm_content %>%
      textstat_frequency(n=10) %>%
@@ -75,9 +74,11 @@ dfm_content %>%
                 coord_flip() +
                 labs(x = NULL, y = "Frequency") +
                 theme_minimal()
+topfeatures(dfm_content)
+
 ```
 
-The exploratory result shows the top ten most common words with just comes in the first. This results is after cleansing process which involves removing the common english stopwords. Quanteda conviniently provides the stopwords function to help with this process. 
+The exploratory result shows the top ten most common words is **just**. This results is after cleansing process which involves removing the common english stopwords. Quanteda conviniently provides the stopwords function to help with this process. 
 
 ### **Bigrams**
 
@@ -87,6 +88,7 @@ dfm_twogram <-dfm(twogram)
 rm(twogram)
 bigram <- saveRDS(dfm_twogram, file = "bigram.RDS")
 dfm_twogram <- readRDS("bigram.RDS")
+
 dfm_twogram %>%
     textstat_frequency(n=10) %>%
     ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
@@ -106,6 +108,9 @@ threegram <- tokens_ngrams(ContentTokens, n = 3)
 dfm_threegram <- dfm(threegram)
 rm(threegram)
 trigram <- saveRDS(dfm_threegram, file = "trigram.RDS")
+
+dfm_trigram <- readRDS("trigram.RDS")
+
 dfm_threegram %>%
     textstat_frequency(n=10) %>%
     ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
@@ -114,7 +119,7 @@ dfm_threegram %>%
     labs(x = NULL, y = "Frequency") +
     theme_minimal()
 
-#dfm_trigram <- readRDS("trigram.RDS")
+
 
 ```
 
@@ -123,30 +128,11 @@ dfm_threegram %>%
 
 ## **Coverage Data**
 ```{r Coverage, message=TRUE, warning=TRUE}
-dfm_sorted <- sort(colSums(as.matrix(dfm_content)), decreasing = TRUE)
-count_tokens <- sum(colSums(dfm_content))
-
-count_singular_features <- length(dfm_sorted[tf_sorted == 1])
-count_rare_features <- length(dfm_sorted[dfm_sorted > 0 & dfm_sorted <= 5])
-
-# same as tf of a dfm with all sources grouped into one document
-rel_freq <- tf_sorted / count_sample_tokens * 100
-coverage <- cumsum(rel_freq)
-index_50 <- Position(function(x) x >= 50, coverage)
-index_90 <- Position(function(x) x >= 90, coverage)
-
-freq_50 <- dfm_sorted[idx_cover_50]
-freq_90 <- dfm_sorted[idx_cover_90]
-
-coverage_points <- c(idx_cover_50, idx_cover_90)
-plot(coverage[1:(index_0 + 100)], type = "p", cex = .4, xaxt = "n",
-     xlab = "Number of Features",
-     ylab = "Coverage (in percent)",
-     main = "Coverage by Number of Features")
-abline(v = special_points,
-       lwd = 2, lty = 3, col = "blue")
-axis(1, coverage_points,
-     labels = coverage_points)
+words <- topfeatures(dfm_content, length(dfm_content))
+df <- data.frame(words)
+df$n <- c(1:nrow(df))
+df$total <- cumsum(df$words)
+ggplot(df, aes(x =n, y =total)) + geom_line() + xlab('Number of Unique Words') + ylab('Coverage') + ggtitle('Coverage per Number of Unigrams')
 ```
 
 ## **Performance**
