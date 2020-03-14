@@ -76,3 +76,39 @@ dfm_threegram %>%
     theme_minimal()
 trigram <- saveRDS(dfm_threegram, file = "trigram.RDS")
 dfm_trigram <- readRDS("trigram.RDS")
+
+tf_sorted <- sort(colSums(as.matrix(dfm_content)), decreasing = TRUE)
+count_sample_tokens <- sum(colSums(dfm_content))
+stopifnot(sum(tf_sorted) == count_sample_tokens)
+
+count_singular_features <- length(tf_sorted[tf_sorted == 1])
+count_seldom_features <- length(tf_sorted[tf_sorted > 0 & tf_sorted <= 10])
+
+# same as tf of a dfm with all sources grouped into one document
+rel_freq <- tf_sorted / count_sample_tokens * 100
+coverage <- cumsum(rel_freq)
+idx_cover_50 <- Position(function(x) x >= 50, coverage)
+idx_cover_80 <- Position(function(x) x >= 80, coverage)
+idx_cover_90 <- Position(function(x) x >= 90, coverage)
+
+freq_cover_50 <- tf_sorted[idx_cover_50]
+freq_cover_80 <- tf_sorted[idx_cover_80]
+freq_cover_90 <- tf_sorted[idx_cover_90]
+
+special_points <- c(idx_cover_50, idx_cover_80, idx_cover_90)
+plot(coverage[1:(idx_cover_90 + 100)], type = "p", cex = .4, xaxt = "n",
+     xlab = "Number of Features",
+     ylab = "Coverage of Corpus (in percent)",
+     main = "Coverage of Corpus by Number of Features")
+abline(v = special_points,
+       lwd = 2, lty = 3, col = "red")
+axis(1, special_points,
+     labels = special_points)
+
+filenames <- list.files(pattern = "*.txt", full.names = TRUE)
+sapply(filenames, function(x) length(readLines(x)))
+
+for (thing in ls()) {
+    message(thing)
+    print(object.size(get(thing)), units='auto')
+}

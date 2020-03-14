@@ -5,11 +5,11 @@ date: "3/14/2020"
 output: html_document
 ---
 
-**Overview**  
+## **Overview**  
 This project will focus to explore major features in data provided and future plans regarding text prediction application that will be built based on this exploratory analysis.
 The [data set] (https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) provided contains multiples languanges text from twitter, blogs and news, however for this project only english text will be used for analysis.
 
-**Data Preparation**
+## **Data Preparation**
 ```{r Preparation, message=TRUE, warning=TRUE}
 library(quanteda)
 library(stopwords)
@@ -31,7 +31,7 @@ corpusNews <- corpus(news)
 corpusBlogs <- corpus(blogs)
 rm(twitter,news,blogs)
 
-ContentCorpus <- corpusTwitter + corpusNews + corpsaveRDS()
+ContentCorpus <- corpusTwitter + corpusNews + corpusBlogs
 docnames(ContentCorpus) <- c("Twitter", "Blog", "News")
 rm(corpusTwitter, corpusNews, corpusBlogs)
 
@@ -47,11 +47,114 @@ ContentTokens <- tokens(ContentCorpus, remove_numbers = TRUE,
                         remove_punct = TRUE, remove_symbols = TRUE,
                         remove_twitter = TRUE,
                         remove_hyphens = TRUE, remove_url = TRUE)
-ContentTokens <- tokens_select(ContentTokens, names(data_int_syllables), selection = 'keep')
-ContentTokens <- tokens_select(ContentTokens, stopwords('en'), selection = 'remove', min_nchar = 2)
+ContentTokens <- tokens_select(ContentTokens,
+                               names(data_int_syllables),
+                               selection = 'keep')
+ContentTokens <- tokens_select(ContentTokens, stopwords('en'),
+                               selection = 'remove', min_nchar = 2)
 ContentTokens <- tokens_wordstem(ContentTokens)
 ContentTokens <- tokens_tolower(ContentTokens)
-summary(ContentTokens)
+
+# prepares document features matrix
+dfm_content <- dfm(ContentTokens)
+dfm_content <- dfm_trim(dfm_content, min_docfreq = 2)
+
+
 ```
 
+## **Exploratory Analysis**  
+### **Unigram**
+```{r Unigram, message=TRUE, warning=TRUE}
+# exploratory data analysis
+topfeatures(dfm_content)
+
+dfm_content %>%
+     textstat_frequency(n=10) %>%
+     ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+                geom_bar(stat = "identity") +
+                coord_flip() +
+                labs(x = NULL, y = "Frequency") +
+                theme_minimal()
+```
+
+The exploratory result shows the top ten most common words with just comes in the first. This results is after cleansing process which involves removing the common english stopwords. Quanteda conviniently provides the stopwords function to help with this process. 
+
+### **Bigrams**
+
+```{r Bigrams, message=TRUE, warning=TRUE}
+twogram <- tokens_ngrams(ContentTokens, n = 2)
+dfm_twogram <-dfm(twogram)
+rm(twogram)
+bigram <- saveRDS(dfm_twogram, file = "bigram.RDS")
+dfm_twogram <- readRDS("bigram.RDS")
+dfm_twogram %>%
+    textstat_frequency(n=10) %>%
+    ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+    geom_point() +
+    coord_flip() +
+    labs(x = NULL, y = "Frequency") +
+    theme_minimal()
+topfeatures(dfm_twogram)
+
+```
+
+
+
+### **Trigrams**
+```{r Trigrams, message=TRUE, warning=TRUE}
+threegram <- tokens_ngrams(ContentTokens, n = 3)
+dfm_threegram <- dfm(threegram)
+rm(threegram)
+trigram <- saveRDS(dfm_threegram, file = "trigram.RDS")
+dfm_threegram %>%
+    textstat_frequency(n=10) %>%
+    ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+    geom_point() +
+    coord_flip() +
+    labs(x = NULL, y = "Frequency") +
+    theme_minimal()
+
+#dfm_trigram <- readRDS("trigram.RDS")
+
+```
+
+
+
+
+## **Coverage Data**
+```{r Coverage, message=TRUE, warning=TRUE}
+dfm_sorted <- sort(colSums(as.matrix(dfm_content)), decreasing = TRUE)
+count_tokens <- sum(colSums(dfm_content))
+
+count_singular_features <- length(dfm_sorted[tf_sorted == 1])
+count_rare_features <- length(dfm_sorted[dfm_sorted > 0 & dfm_sorted <= 5])
+
+# same as tf of a dfm with all sources grouped into one document
+rel_freq <- tf_sorted / count_sample_tokens * 100
+coverage <- cumsum(rel_freq)
+index_50 <- Position(function(x) x >= 50, coverage)
+index_90 <- Position(function(x) x >= 90, coverage)
+
+freq_50 <- dfm_sorted[idx_cover_50]
+freq_90 <- dfm_sorted[idx_cover_90]
+
+coverage_points <- c(idx_cover_50, idx_cover_90)
+plot(coverage[1:(index_0 + 100)], type = "p", cex = .4, xaxt = "n",
+     xlab = "Number of Features",
+     ylab = "Coverage (in percent)",
+     main = "Coverage by Number of Features")
+abline(v = special_points,
+       lwd = 2, lty = 3, col = "blue")
+axis(1, coverage_points,
+     labels = coverage_points)
+```
+
+## **Performance**
+```{r object size, message=TRUE, warning=TRUE}
+# Objects size
+for (thing in ls()) {
+        message(thing)
+        print(object.size(get(thing)), units='auto')
+}
+```
 
