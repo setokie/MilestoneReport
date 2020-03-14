@@ -17,6 +17,11 @@ ContentCorpus <- corpusTwitter + corpusNews + corpusBlogs
 docnames(ContentCorpus) <- c("Twitter", "Blog", "News")
 summary(ContentCorpus)
 
+# remove data
+rm(corpusTwitter)
+rm(corpusNews)
+rm(corpusBlogs)
+
 # constructing tokens
 ContentTokens <- tokens(ContentCorpus, remove_numbers = TRUE,
                         remove_punct = TRUE, remove_symbols = TRUE,
@@ -33,9 +38,11 @@ summary(ContentTokens)
 dfm_content <- dfm(ContentTokens)
 dfm_content <- dfm_trim(dfm_content, min_docfreq = 2)
 topfeatures(dfm_content)
+unigram <- saveRDS(dfm_content, file = "unigram.RDS")
+dfm_content <- readRDS("unigram.RDS")
 
 # exploratory data analysis
- dfm_content %>%
+dfm_content %>%
      textstat_frequency(n=10) %>%
      ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
                 geom_point() +
@@ -45,7 +52,9 @@ topfeatures(dfm_content)
 
 twogram <- tokens_ngrams(ContentTokens, n = 2)
 dfm_twogram <-dfm(twogram)
-
+rm(twogram)
+bigram <- saveRDS(dfm_twogram, file = "bigram.RDS")
+dfm_twogram <- readRDS("bigram.RDS")
 dfm_twogram %>%
     textstat_frequency(n=10) %>%
     ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
@@ -57,4 +66,13 @@ topfeatures(dfm_twogram)
 
 threegram <- tokens_ngrams(ContentTokens, n = 3)
 dfm_threegram <- dfm(threegram)
-
+rm(threegram)
+dfm_threegram %>%
+    textstat_frequency(n=10) %>%
+    ggplot(aes(x = reorder(feature, frequency), y = frequency)) +
+    geom_point() +
+    coord_flip() +
+    labs(x = NULL, y = "Frequency") +
+    theme_minimal()
+trigram <- saveRDS(dfm_threegram, file = "trigram.RDS")
+dfm_trigram <- readRDS("trigram.RDS")

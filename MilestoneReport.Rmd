@@ -1,0 +1,57 @@
+---
+title: "Milestone Report"
+author: "Nur Seto Dimas"
+date: "3/14/2020"
+output: html_document
+---
+
+**Overview**  
+This project will focus to explore major features in data provided and future plans regarding text prediction application that will be built based on this exploratory analysis.
+The [data set] (https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) provided contains multiples languanges text from twitter, blogs and news, however for this project only english text will be used for analysis.
+
+**Data Preparation**
+```{r Preparation, message=TRUE, warning=TRUE}
+library(quanteda)
+library(stopwords)
+library(dplyr)
+library(ggplot2)
+library(readtext)
+
+# download.file('https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip', 'Coursera-SwiftKey.zip')
+# unzip('Coursera-SwiftKey.zip')
+
+#load data set 
+twitter <- readtext("en_US.twitter.txt")
+news <- readtext("en_US.news.txt")
+blogs <- readtext("en_US.blogs.txt")
+
+# creating corpus
+corpusTwitter <- corpus(twitter)
+corpusNews <- corpus(news)
+corpusBlogs <- corpus(blogs)
+rm(twitter,news,blogs)
+
+ContentCorpus <- corpusTwitter + corpusNews + corpsaveRDS()
+docnames(ContentCorpus) <- c("Twitter", "Blog", "News")
+rm(corpusTwitter, corpusNews, corpusBlogs)
+
+summary(ContentCorpus)
+```
+
+In summary result, tokens represent the number of words in the data set. Overall blogs has the most content of words compared to two other sources while twitter has the most sentences.
+
+**Tokenization**
+```{r Tokenization, message=TRUE, warning=TRUE}
+# constructing tokens
+ContentTokens <- tokens(ContentCorpus, remove_numbers = TRUE,
+                        remove_punct = TRUE, remove_symbols = TRUE,
+                        remove_twitter = TRUE,
+                        remove_hyphens = TRUE, remove_url = TRUE)
+ContentTokens <- tokens_select(ContentTokens, names(data_int_syllables), selection = 'keep')
+ContentTokens <- tokens_select(ContentTokens, stopwords('en'), selection = 'remove', min_nchar = 2)
+ContentTokens <- tokens_wordstem(ContentTokens)
+ContentTokens <- tokens_tolower(ContentTokens)
+summary(ContentTokens)
+```
+
+
